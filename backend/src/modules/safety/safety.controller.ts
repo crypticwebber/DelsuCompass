@@ -1,0 +1,13 @@
+import type { RequestHandler } from "express";
+import { safetyService } from "./safety.service.js";
+import { safetyAdminService } from "./safety-admin.service.js";
+export const listAlerts:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyService.listAlerts(req.query)})}catch(e){next(e)}};
+export const getAlert:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyService.getAlert(String(req.params.id))})}catch(e){next(e)}};
+export const submitReport:RequestHandler=async(req,res,next)=>{try{res.status(201).json({success:true,message:"Safety report submitted for administrator review",data:await safetyService.submitReport(req.auth!.userId,req.body)})}catch(e){next(e)}};
+export const myReports:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyService.myReports(req.auth!.userId)})}catch(e){next(e)}};
+export const adminReports:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyAdminService.reports((typeof req.query.status === "string" ? req.query.status : undefined),(typeof req.query.severity === "string" ? req.query.severity : undefined))})}catch(e){next(e)}};
+export const adminUpdateReport:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyAdminService.updateReport(req.auth!.userId,String(req.params.id),req.body.status,req.body.resolutionNote)})}catch(e){next(e)}};
+export const adminAlerts:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyAdminService.alerts((typeof req.query.status === "string" ? req.query.status : undefined))})}catch(e){next(e)}};
+export const adminCreateAlert:RequestHandler=async(req,res,next)=>{try{res.status(201).json({success:true,message:"Safety alert published",data:await safetyAdminService.createAlert(req.auth!.userId,req.body)})}catch(e){next(e)}};
+export const adminUpdateAlert:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await safetyAdminService.updateAlert(String(req.params.id),req.body)})}catch(e){next(e)}};
+export const adminStats:RequestHandler=async(_req,res,next)=>{try{res.json({success:true,data:await safetyAdminService.stats()})}catch(e){next(e)}};

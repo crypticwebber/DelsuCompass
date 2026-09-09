@@ -1,0 +1,7 @@
+export type AccommodationStatus = "pending" | "approved" | "rejected" | "unavailable";
+export type RoomType = "single_room" | "self_contained" | "one_bedroom" | "two_bedroom" | "shared_room" | "hostel" | "other";
+export interface ReviewSummary { count: number; average: number | null; priceFairness?: number|null; water?: number|null; electricity?: number|null; security?: number|null; environment?: number|null }
+export interface AccommodationListing { _id:string; title:string; area:string; addressLandmark:string; annualRent:number; roomType:RoomType; description:string; facilities:string[]; distanceToCampusKm?:number; waterSupply?:string; electricity?:string; security?:string; imageUrls:string[]; contactName:string; contactPhone:string; status:AccommodationStatus; rejectionReason?:string; reviewSummary?:ReviewSummary; createdAt:string; updatedAt:string; }
+export interface AccommodationReview { _id:string; rating:number; comment?:string; createdAt:string; userId?:{fullName:string}; }
+export interface AccommodationDetail extends AccommodationListing { reviews: AccommodationReview[] }
+export interface AccommodationInput { title:string; area:string; addressLandmark:string; annualRent:number; roomType:RoomType; description:string; facilities:string[]; distanceToCampusKm?:number; waterSupply?:"poor"|"fair"|"good"|"very_good"; electricity?:"poor"|"fair"|"good"|"very_good"; security?:"poor"|"fair"|"good"|"very_good"; imageUrls:string[]; contactName:string; contactPhone:string; }

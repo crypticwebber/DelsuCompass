@@ -1,0 +1,1 @@
+import { Router } from "express";import { authenticate,requireRole } from "../auth/auth.middleware.js";import { UserRole } from "../users/user.types.js";import { search } from "./search.controller.js";export const searchRouter=Router();searchRouter.use(authenticate,requireRole(UserRole.STUDENT));searchRouter.get("/",search);

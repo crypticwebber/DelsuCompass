@@ -1,0 +1,12 @@
+import type { RequestHandler } from "express";import { informationService as s } from "./information.service.js";
+export const explore:RequestHandler=async(_q,r,n)=>{try{r.json({success:true,data:await s.explore()})}catch(e){n(e)}};
+export const notices:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.publicNotices(q.query)})}catch(e){n(e)}};
+export const notice:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.publicNotice(String(q.params.id))})}catch(e){n(e)}};
+export const guides:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.publicGuides(q.query)})}catch(e){n(e)}};
+export const guide:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.publicGuide(String(q.params.id))})}catch(e){n(e)}};
+export const adminNotices:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.adminNotices(q.query)})}catch(e){n(e)}};
+export const createNotice:RequestHandler=async(q,r,n)=>{try{r.status(201).json({success:true,message:"Notice created",data:await s.createNotice(q.auth!.userId,q.body)})}catch(e){n(e)}};
+export const updateNotice:RequestHandler=async(q,r,n)=>{try{r.json({success:true,message:"Notice updated",data:await s.updateNotice(q.auth!.userId,String(q.params.id),q.body)})}catch(e){n(e)}};
+export const adminGuides:RequestHandler=async(q,r,n)=>{try{r.json({success:true,data:await s.adminGuides(q.query)})}catch(e){n(e)}};
+export const createGuide:RequestHandler=async(q,r,n)=>{try{r.status(201).json({success:true,message:"Guide created",data:await s.createGuide(q.auth!.userId,q.body)})}catch(e){n(e)}};
+export const updateGuide:RequestHandler=async(q,r,n)=>{try{r.json({success:true,message:"Guide updated",data:await s.updateGuide(q.auth!.userId,String(q.params.id),q.body)})}catch(e){n(e)}};

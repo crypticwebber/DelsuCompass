@@ -1,0 +1,9 @@
+export type NoticeCategory="admission"|"academic"|"registration"|"examination"|"campus"|"general";
+export type NoticeStatus="draft"|"published"|"archived";
+export type NoticeAudience="public"|"students"|"all";
+export type GuideCategory="about_delsu"|"campus_abraka"|"accommodation"|"admissions"|"academic"|"new_students"|"general";
+export type InformationNotice={id:string;title:string;summary:string;content:string;category:NoticeCategory;audience:NoticeAudience;importantDate?:string;sourceUrl?:string;sourceLabel?:string;isFeatured:boolean;status:NoticeStatus;publishedAt?:string;expiresAt?:string;createdAt:string;updatedAt:string};
+export type GuideArticle={id:string;title:string;category:GuideCategory;excerpt:string;content:string;sourceUrl?:string;sourceLabel?:string;sortOrder:number;isPublished:boolean;publishedAt?:string;createdAt:string;updatedAt:string};
+export type PublicLocation={_id:string;name:string;description?:string;category:string;area:string;campusSite?:string;latitude:number;longitude:number};
+export type RentSummary={roomType:string;minRent:number;maxRent:number;averageRent:number;count:number};
+export type ExploreData={featured:InformationNotice[];latest:InformationNotice[];guides:GuideArticle[];locations:PublicLocation[];accommodation:RentSummary[]};

@@ -1,0 +1,1 @@
+export type Notification={_id:string;type:"class_reminder"|"moderation"|"safety_alert"|"official_notice"|"event_reminder"|"opportunity_deadline"|"system";title:string;message:string;link?:string;readAt?:string|null;scheduledFor?:string;createdAt:string;metadata?:Record<string,unknown>};

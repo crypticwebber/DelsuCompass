@@ -1,0 +1,1 @@
+import { apiClient } from "@/services/api/axios";import type { SearchResult } from "./search.types";type R<T>={success:true;data:T};export const searchApi={async search(q:string,type="all"){const {data}=await apiClient.get<R<SearchResult>>("/search",{params:{q,type}});return data.data;}};

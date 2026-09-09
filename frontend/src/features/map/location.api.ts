@@ -1,0 +1,4 @@
+import { apiClient } from "@/services/api/axios";import type { CampusLocation } from "./location.types";
+type R<T>={success:true;data:T;message?:string};
+export const locationApi={async list(params:Record<string,string|undefined>={}){const{data}=await apiClient.get<R<CampusLocation[]>>("/locations",{params});return data.data}};
+export const adminLocationApi={async list(){const{data}=await apiClient.get<R<CampusLocation[]>>("/admin/locations");return data.data},async create(input:Omit<CampusLocation,"_id">){const{data}=await apiClient.post<R<CampusLocation>>("/admin/locations",input);return data.data},async update(id:string,input:Partial<CampusLocation>){const{data}=await apiClient.patch<R<CampusLocation>>(`/admin/locations/${id}`,input);return data.data},async remove(id:string){const{data}=await apiClient.delete<R<CampusLocation>>(`/admin/locations/${id}`);return data.data}};

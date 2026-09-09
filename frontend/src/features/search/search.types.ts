@@ -1,0 +1,1 @@
+export type SearchItem={id:string;title:string;subtitle:string;description:string;link:string};export type SearchGroup={type:string;items:SearchItem[]};export type SearchResult={query:string;total:number;groups:SearchGroup[]};

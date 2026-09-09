@@ -1,0 +1,25 @@
+import cookieParser from "cookie-parser";
+import compression from "compression";
+import express from "express";
+import { apiRouter } from "./routes/index.js";
+import { apiRateLimiter, corsMiddleware, helmetMiddleware } from "./middleware/security.middleware.js";
+import { noStoreSensitiveResponses, rejectNoSqlOperatorInjection, requestIdMiddleware } from "./middleware/request-security.middleware.js";
+import { notFoundHandler } from "./middleware/not-found.middleware.js";
+import { errorHandler } from "./middleware/error.middleware.js";
+
+export const app = express();
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+app.use(requestIdMiddleware);
+app.use(helmetMiddleware);
+app.use(corsMiddleware);
+app.use(compression());
+app.use(apiRateLimiter);
+app.use(express.json({ limit: "1mb", strict: true }));
+app.use(express.urlencoded({ extended: false, limit: "1mb", parameterLimit: 100 }));
+app.use(cookieParser());
+app.use(rejectNoSqlOperatorInjection);
+app.use(noStoreSensitiveResponses);
+app.use("/api/v1", apiRouter);
+app.use(notFoundHandler);
+app.use(errorHandler);

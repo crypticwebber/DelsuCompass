@@ -1,0 +1,11 @@
+import { z } from "zod";
+import { SAFETY_ALERT_STATUSES, SAFETY_CATEGORIES, SAFETY_REPORT_STATUSES, SAFETY_SEVERITIES } from "./safety.types.js";
+const objectId=z.string().regex(/^[a-f\d]{24}$/i,"Invalid id");
+export const listAlertsSchema=z.object({query:z.object({category:z.enum(SAFETY_CATEGORIES).optional(),severity:z.enum(SAFETY_SEVERITIES).optional(),search:z.string().trim().max(100).optional()})});
+export const submitReportSchema=z.object({body:z.object({category:z.enum(SAFETY_CATEGORIES),severity:z.enum(SAFETY_SEVERITIES),description:z.string().trim().min(10).max(3000),locationName:z.string().trim().min(2).max(180),latitude:z.number().min(-90).max(90).optional(),longitude:z.number().min(-180).max(180).optional(),incidentAt:z.coerce.date(),allowAnonymousPublicUse:z.boolean().optional()})});
+export const idSchema=z.object({params:z.object({id:objectId})});
+export const adminReportQuerySchema=z.object({query:z.object({status:z.enum(SAFETY_REPORT_STATUSES).optional(),severity:z.enum(SAFETY_SEVERITIES).optional()})});
+export const updateReportStatusSchema=z.object({params:z.object({id:objectId}),body:z.object({status:z.enum(["reviewing","resolved","dismissed"]),resolutionNote:z.string().trim().max(800).optional()})});
+export const createAlertSchema=z.object({body:z.object({title:z.string().trim().min(4).max(160),description:z.string().trim().min(10).max(2500),category:z.enum(SAFETY_CATEGORIES),severity:z.enum(SAFETY_SEVERITIES),area:z.string().trim().min(2).max(180),safetyAdvice:z.string().trim().max(1200).optional(),sourceReportId:objectId.optional(),expiresAt:z.coerce.date().optional()})});
+export const adminAlertQuerySchema=z.object({query:z.object({status:z.enum(SAFETY_ALERT_STATUSES).optional()})});
+export const updateAlertSchema=z.object({params:z.object({id:objectId}),body:z.object({title:z.string().trim().min(4).max(160).optional(),description:z.string().trim().min(10).max(2500).optional(),category:z.enum(SAFETY_CATEGORIES).optional(),severity:z.enum(SAFETY_SEVERITIES).optional(),area:z.string().trim().min(2).max(180).optional(),safetyAdvice:z.string().trim().max(1200).optional(),status:z.enum(SAFETY_ALERT_STATUSES).optional(),expiresAt:z.coerce.date().nullable().optional()}).refine(v=>Object.keys(v).length>0,"No update supplied")});

@@ -1,0 +1,14 @@
+import type { RequestHandler } from "express";
+import { communityService } from "./community.service.js";import { communityAdminService } from "./community-admin.service.js";
+export const listPublic:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityService.listPublic(req.query)})}catch(e){next(e)}};
+export const getPublic:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityService.getPublic(String(req.params.id))})}catch(e){next(e)}};
+export const mine:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityService.mine(req.auth!.userId)})}catch(e){next(e)}};
+export const createPost:RequestHandler=async(req,res,next)=>{try{res.status(201).json({success:true,message:"Community post submitted for moderation",data:await communityService.create(req.auth!.userId,req.body)})}catch(e){next(e)}};
+export const updatePost:RequestHandler=async(req,res,next)=>{try{res.json({success:true,message:"Post updated and returned to moderation",data:await communityService.updateMine(req.auth!.userId,String(req.params.id),req.body)})}catch(e){next(e)}};
+export const deletePost:RequestHandler=async(req,res,next)=>{try{await communityService.removeMine(req.auth!.userId,String(req.params.id));res.json({success:true,message:"Post deleted"})}catch(e){next(e)}};
+export const reportPost:RequestHandler=async(req,res,next)=>{try{res.status(201).json({success:true,message:"Report submitted",data:await communityService.report(req.auth!.userId,String(req.params.id),req.body)})}catch(e){next(e)}};
+export const adminPosts:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityAdminService.posts((typeof req.query.status === "string" ? req.query.status : undefined))})}catch(e){next(e)}};
+export const moderatePost:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityAdminService.moderate(req.auth!.userId,String(req.params.id),req.body.status,req.body.reason)})}catch(e){next(e)}};
+export const adminReports:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityAdminService.reports((typeof req.query.status === "string" ? req.query.status : undefined))})}catch(e){next(e)}};
+export const resolveReport:RequestHandler=async(req,res,next)=>{try{res.json({success:true,data:await communityAdminService.resolveReport(req.auth!.userId,String(req.params.id),req.body.status,req.body.resolutionNote)})}catch(e){next(e)}};
+export const adminStats:RequestHandler=async(_req,res,next)=>{try{res.json({success:true,data:await communityAdminService.stats()})}catch(e){next(e)}};
