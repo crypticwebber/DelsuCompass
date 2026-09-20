@@ -29,7 +29,12 @@ export const corsMiddleware = cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Request-Id",
+    "X-Session-Id",
+  ],
   exposedHeaders: ["X-Request-Id"],
   maxAge: 600,
 });
@@ -43,7 +48,13 @@ export const apiRateLimiter = rateLimit({
   ...commonRateLimitOptions,
   windowMs: 15 * 60 * 1000,
   limit: env.NODE_ENV === "test" ? 10_000 : 300,
-  message: { success: false, error: { code: "RATE_LIMIT_EXCEEDED", message: "Too many requests. Please try again later." } },
+  message: {
+    success: false,
+    error: {
+      code: "RATE_LIMIT_EXCEEDED",
+      message: "Too many requests. Please try again later.",
+    },
+  },
 });
 
 export const authRateLimiter = rateLimit({
@@ -51,12 +62,24 @@ export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.NODE_ENV === "test" ? 10_000 : 20,
   skipSuccessfulRequests: false,
-  message: { success: false, error: { code: "AUTH_RATE_LIMIT_EXCEEDED", message: "Too many authentication attempts. Please wait and try again." } },
+  message: {
+    success: false,
+    error: {
+      code: "AUTH_RATE_LIMIT_EXCEEDED",
+      message: "Too many authentication attempts. Please wait and try again.",
+    },
+  },
 });
 
 export const uploadRateLimiter = rateLimit({
   ...commonRateLimitOptions,
   windowMs: 15 * 60 * 1000,
   limit: env.NODE_ENV === "test" ? 10_000 : 12,
-  message: { success: false, error: { code: "UPLOAD_RATE_LIMIT_EXCEEDED", message: "Too many upload attempts. Please wait before trying again." } },
+  message: {
+    success: false,
+    error: {
+      code: "UPLOAD_RATE_LIMIT_EXCEEDED",
+      message: "Too many upload attempts. Please wait before trying again.",
+    },
+  },
 });

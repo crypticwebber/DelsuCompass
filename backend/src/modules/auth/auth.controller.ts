@@ -1,19 +1,173 @@
-import type { Request,RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 import { authService } from "./auth.service.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../utils/AppError.js";
 import { mailService } from "../../services/mail/mail.service.js";
-const COOKIE_NAME="delsu_refresh";
-const cookieOptions={httpOnly:true,secure:env.NODE_ENV==="production",sameSite:env.NODE_ENV==="production"?("none" as const):("lax" as const),path:"/api/v1/auth",maxAge:7*24*60*60*1000};
-const metadata=(req:Request)=>({userAgent:req.get("user-agent")??undefined,ipAddress:req.ip});
-export const authController={
- register:(async(req,res,next)=>{try{const result=await authService.register(req.body);if(env.NODE_ENV==="development")console.log(`DELSU Compass verification OTP for ${result.user.email}: ${result.verificationOtp}`);await mailService.sendVerificationOtp({to:result.user.email,name:result.user.fullName,otp:result.verificationOtp});res.status(201).json({success:true,message:"Registration successful. Enter the verification code sent to your email.",data:{user:result.user}})}catch(e){next(e)}})as RequestHandler,
- login:(async(req,res,next)=>{try{const result=await authService.login(req.body,metadata(req));res.cookie(COOKIE_NAME,result.refreshToken,cookieOptions);res.json({success:true,message:"Login successful",data:{user:result.user,accessToken:result.accessToken}})}catch(e){next(e)}})as RequestHandler,
- refresh:(async(req,res,next)=>{try{const token=req.cookies?.[COOKIE_NAME];if(!token)throw new AppError(401,"REFRESH_TOKEN_REQUIRED","Refresh token is required");const result=await authService.refresh(token,metadata(req));res.cookie(COOKIE_NAME,result.refreshToken,cookieOptions);res.json({success:true,data:{user:result.user,accessToken:result.accessToken}})}catch(e){next(e)}})as RequestHandler,
- logout:(async(req,res,next)=>{try{await authService.logout(req.cookies?.[COOKIE_NAME]);res.clearCookie(COOKIE_NAME,{...cookieOptions,maxAge:undefined});res.json({success:true,message:"Logout successful"})}catch(e){next(e)}})as RequestHandler,
- verifyEmail:(async(req,res,next)=>{try{const user=await authService.verifyEmail(req.body);res.json({success:true,message:"Email verified successfully",data:{user}})}catch(e){next(e)}})as RequestHandler,
- resendVerification:(async(req,res,next)=>{try{const result=await authService.resendVerification(req.body.email);if(result.verificationOtp&&result.user){if(env.NODE_ENV==="development")console.log(`New DELSU Compass verification OTP for ${result.user.email}: ${result.verificationOtp}`);await mailService.sendVerificationOtp({to:result.user.email,name:result.user.fullName,otp:result.verificationOtp})}res.json({success:true,message:"If the account exists and is unverified, a new code has been sent."})}catch(e){next(e)}})as RequestHandler,
- forgotPassword:(async(req,res,next)=>{try{const result=await authService.forgotPassword(req.body.email);if(result.resetToken&&result.user){const resetUrl=`${env.CLIENT_URL.replace(/\/$/,"")}/reset-password?token=${encodeURIComponent(result.resetToken)}`;if(env.NODE_ENV==="development")console.log(`Password reset link for ${result.user.email}: ${resetUrl}`);await mailService.sendPasswordResetEmail({to:result.user.email,name:result.user.fullName,token:result.resetToken})}res.json({success:true,message:"If an active account exists for that email, a password reset email has been sent."})}catch(e){next(e)}})as RequestHandler,
- resetPassword:(async(req,res,next)=>{try{await authService.resetPassword({token:req.body.token,password:req.body.password});res.clearCookie(COOKIE_NAME,{...cookieOptions,maxAge:undefined});res.json({success:true,message:"Password reset successful. Sign in with your new password."})}catch(e){next(e)}})as RequestHandler,
- me:(async(req,res,next)=>{try{if(!req.auth)throw new AppError(401,"AUTH_REQUIRED","Authentication is required");const user=await authService.getById(req.auth.userId);res.json({success:true,data:{user}})}catch(e){next(e)}})as RequestHandler,
+import { sessionCookieName } from "./session-cookie.js";
+const COOKIE_NAME = "delsu_refresh";
+const cookieOptions = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite:
+    env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
+  path: "/api/v1/auth",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+const metadata = (req: Request) => ({
+  userAgent: req.get("user-agent") ?? undefined,
+  ipAddress: req.ip,
+});
+export const authController = {
+  register: (async (req, res, next) => {
+    try {
+      const result = await authService.register(req.body);
+      if (env.NODE_ENV === "development")
+        console.log(
+          `DELSU Compass verification OTP for ${result.user.email}: ${result.verificationOtp}`,
+        );
+      await mailService.sendVerificationOtp({
+        to: result.user.email,
+        name: result.user.fullName,
+        otp: result.verificationOtp,
+      });
+      res
+        .status(201)
+        .json({
+          success: true,
+          message:
+            "Registration successful. Enter the verification code sent to your email.",
+          data: { user: result.user },
+        });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  login: (async (req, res, next) => {
+    try {
+      const name = sessionCookieName(req);
+      const result = await authService.login(req.body, metadata(req));
+      res.cookie(name, result.refreshToken, cookieOptions);
+      res.json({
+        success: true,
+        message: "Login successful",
+        data: { user: result.user, accessToken: result.accessToken },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  refresh: (async (req, res, next) => {
+    try {
+      const name = sessionCookieName(req);
+      const token = req.cookies?.[name];
+      if (!token)
+        throw new AppError(
+          401,
+          "REFRESH_TOKEN_REQUIRED",
+          "Refresh token is required",
+        );
+      const result = await authService.refresh(token, metadata(req));
+      res.cookie(name, result.refreshToken, cookieOptions);
+      res.json({
+        success: true,
+        data: { user: result.user, accessToken: result.accessToken },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  logout: (async (req, res, next) => {
+    try {
+      const name = sessionCookieName(req);
+      await authService.logout(req.cookies?.[name]);
+      res.clearCookie(name, { ...cookieOptions, maxAge: undefined });
+      res.json({ success: true, message: "Logout successful" });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  verifyEmail: (async (req, res, next) => {
+    try {
+      const user = await authService.verifyEmail(req.body);
+      res.json({
+        success: true,
+        message: "Email verified successfully",
+        data: { user },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  resendVerification: (async (req, res, next) => {
+    try {
+      const result = await authService.resendVerification(req.body.email);
+      if (result.verificationOtp && result.user) {
+        if (env.NODE_ENV === "development")
+          console.log(
+            `New DELSU Compass verification OTP for ${result.user.email}: ${result.verificationOtp}`,
+          );
+        await mailService.sendVerificationOtp({
+          to: result.user.email,
+          name: result.user.fullName,
+          otp: result.verificationOtp,
+        });
+      }
+      res.json({
+        success: true,
+        message:
+          "If the account exists and is unverified, a new code has been sent.",
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  forgotPassword: (async (req, res, next) => {
+    try {
+      const result = await authService.forgotPassword(req.body.email);
+      if (result.resetToken && result.user) {
+        const resetUrl = `${env.CLIENT_URL.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(result.resetToken)}`;
+        if (env.NODE_ENV === "development")
+          console.log(
+            `Password reset link for ${result.user.email}: ${resetUrl}`,
+          );
+        await mailService.sendPasswordResetEmail({
+          to: result.user.email,
+          name: result.user.fullName,
+          token: result.resetToken,
+        });
+      }
+      res.json({
+        success: true,
+        message:
+          "If an active account exists for that email, a password reset email has been sent.",
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  resetPassword: (async (req, res, next) => {
+    try {
+      await authService.resetPassword({
+        token: req.body.token,
+        password: req.body.password,
+      });
+      res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: undefined });
+      res.json({
+        success: true,
+        message: "Password reset successful. Sign in with your new password.",
+      });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
+  me: (async (req, res, next) => {
+    try {
+      if (!req.auth)
+        throw new AppError(401, "AUTH_REQUIRED", "Authentication is required");
+      const user = await authService.getById(req.auth.userId);
+      res.json({ success: true, data: { user } });
+    } catch (e) {
+      next(e);
+    }
+  }) as RequestHandler,
 };

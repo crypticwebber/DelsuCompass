@@ -1,7 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { authApi } from "./auth.api";
 import type { AuthUser } from "./auth.types";
 import { authTokenStore } from "@/store/auth.store";
+import { authSessionStore } from "@/store/auth-session.store";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -14,11 +23,13 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    authApi.refresh()
+    authApi
+      .refresh()
       .then((payload) => {
         authTokenStore.set(payload.accessToken);
         setUser(payload.user);
@@ -30,23 +41,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setInitializing(false));
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    user,
-    initializing,
-    async login(email, password) {
-      const payload = await authApi.login({ email, password });
-      authTokenStore.set(payload.accessToken);
-      setUser(payload.user);
-      return payload.user;
-    },
-    async logout() {
-      try { await authApi.logout(); } finally {
-        authTokenStore.clear();
-        setUser(null);
-      }
-    },
-    setUser,
-  }), [user, initializing]);
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      initializing,
+      async login(email, password) {
+        const payload = await authApi.login({ email, password });
+        await queryClient.cancelQueries();
+        queryClient.clear();
+        authTokenStore.set(payload.accessToken);
+        setUser(payload.user);
+        return payload.user;
+      },
+      async logout() {
+        try {
+          await authApi.logout();
+        } finally {
+          await queryClient.cancelQueries();
+          queryClient.clear();
+          authTokenStore.clear();
+          authSessionStore.clear();
+          setUser(null);
+        }
+      },
+      setUser,
+    }),
+    [user, initializing, queryClient],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
